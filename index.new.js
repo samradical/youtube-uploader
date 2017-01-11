@@ -27,6 +27,14 @@ const DEFAULTS = {
 
 const P = (() => {
 
+  const EVENT_TYPES = {
+    progress:'progress'
+  }
+
+  let events = {
+    progress:null,
+  }
+
   // Init lien server
   let server = new Lien({
     host: "localhost",
@@ -71,7 +79,7 @@ const P = (() => {
 
           oauth.setCredentials(tokens);
 
-          lien.end("The video is being uploaded. Check out the logs in the terminal.");
+          lien.end("Thanks! You can close this tab.");
 
           resolve()
         })
@@ -84,6 +92,7 @@ const P = (() => {
       let _options = Object.assign({}, DEFAULTS, options)
       console.log(colors.green('-------- .upload() --------'));
       console.log(colors.yellow(`Playlist specified: ${playlist}`));
+      console.log(colors.yellow(`${files.length} files`));
       if (playlist) {
         return _getPlaylistItems(playlist).then(existingItems => {
           return _beginUpload(files, existingItems, playlist, _options)
@@ -100,6 +109,10 @@ const P = (() => {
         })
       }
     })
+  }
+
+  function on(event, callback){
+
   }
 
   function _createPlaylist(options) {
@@ -131,13 +144,13 @@ const P = (() => {
     /*
     NEED A WAY TO SCAN FOR DUPES
     */
-
+    console.log(files);
     return _uploadLocal(files, existingItems, playlistId, options)
       .then((youtubeItems) => {
         return youtubeItems
       })
 
-    /*           
+    /*
      return _getAllChannelUploads()
        .then((uploadedItems) => {
 
@@ -220,10 +233,10 @@ const P = (() => {
         mine: true
       }, (err, data) => {
         if (err) {
+          console.log(err);
           reject(err)
           return
         }
-        console.log(err);
         console.log(data);
         var uploadId = data.items[0].contentDetails.relatedPlaylists.uploads
         resolve(_getPlaylistItems(uploadId, 0))
@@ -233,28 +246,33 @@ const P = (() => {
 
 
   function _uploadLocal(toupload, existingItems, playlist, options) {
-    console.log(toupload);
     return Q.map(toupload, (vo) => {
-
       return new Q((resolve, reject) => {
+
         if (!fs.existsSync(vo)) {
           return resolve()
         }
 
-        var _i 
+        var _i
         var name = PATH.parse(vo).name
         console.log(colors.green(`Uploading ${vo}`));
-
-        if(fs.statSync(vo).size < 5000){
+        const fileByteSize = fs.statSync(vo).size
+        if (fileByteSize < 5000) {
           reject(new Error(`Not a video ${vo}`))
           return
         }
+
+        let title, description;
+        title = (options.playlistItem.title) || options.title || name
+        description = (options.playlistItem.description) || options.description || ""
+
 
         var req = Youtube.videos.insert({
           resource: {
             // Video title and description
             snippet: {
-              title: (options.playlistItem.title === 'random') ? UUID.v4() : name,
+              title: title,
+              description: description,
               defaultLanguage: 'en',
               defaultAudioLanguage: 'en'
             }
@@ -331,9 +349,11 @@ const P = (() => {
           console.log("Done Uploading");
           clearInterval(_i)
         });
-        
+
         _i = setInterval(() => {
+          console.log(req.req.connection._bytesDispatched, fileByteSize);
           Logger.log(`${prettyBytes(req.req.connection._bytesDispatched)} bytes uploaded.`);
+          _dispatchEvent(EVENT_TYPES.progress, req.req.connection._bytesDispatched)
         }, 250);
 
       })
@@ -380,10 +400,18 @@ const P = (() => {
   }
 
 
+  function _dispatchEvent(str, val){
+    if(events[str]){
+      events[str](val)
+    }
+  }
+
+
   return {
     init: init,
     getPlaylistItems: _getPlaylistItems,
-    upload: upload
+    upload: upload,
+    on: on
   }
 })()
 
