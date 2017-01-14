@@ -262,10 +262,10 @@ const P = (() => {
           return
         }
 
-        let title, description;
+        let title, description,privacyStatus;
         title = (options.playlistItem.title) || options.title || name
         description = (options.playlistItem.description) || options.description || ""
-
+        privacyStatus = (options.playlistItem.privacyStatus) || options.privacyStatus || "public"
 
         var req = Youtube.videos.insert({
           resource: {
@@ -279,7 +279,7 @@ const P = (() => {
             // I don't want to spam my subscribers
             ,
             status: {
-              privacyStatus: "public"
+              privacyStatus: privacyStatus
             }
           }
           // This is for the callback function
