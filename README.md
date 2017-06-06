@@ -1,1 +1,5 @@
-Work in progress, used locally only
+Wrapper tool around a great uploader.
+
+Do bulk uploads or single files
+
+`example.js`

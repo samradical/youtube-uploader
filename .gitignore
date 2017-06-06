@@ -46,3 +46,6 @@ build/*
 !config.json
 _out
 *.json
+
+
+creds
