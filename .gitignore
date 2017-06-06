@@ -45,7 +45,6 @@ build/*
 *.mpd
 !config.json
 _out
-*.json
 
 
 creds
