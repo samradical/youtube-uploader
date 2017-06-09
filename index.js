@@ -28,11 +28,15 @@ const DEFAULTS = {
 const P = (() => {
 
   const EVENT_TYPES = {
-    progress: 'progress'
+    progress: 'progress',
+    id: 'id',
+    data: 'data'
   }
 
   let events = {
     progress: [],
+    id: [],
+    data: [],
   }
 
   // Init lien server
@@ -312,12 +316,14 @@ const P = (() => {
             body: fs.createReadStream(vo)
           }
         }, (err, videoUploadData) => {
-
+          _dispatchEvent(EVENT_TYPES.data, err)
           if (err) {
             reject(err)
             return
           }
           let _id = videoUploadData.id
+
+          _dispatchEvent(EVENT_TYPES.id, _id)
             //SUCCESSfUL_IDS.push(_id)
           Youtube.captions.insert({
             part: 'snippet',
@@ -340,6 +346,7 @@ const P = (() => {
                 _exists = true
               }
             })
+            _dispatchEvent(EVENT_TYPES.data, `_exists: ${_exists}`)
             if (_exists) {
               clearInterval(_i)
               resolve(videoUploadData)
